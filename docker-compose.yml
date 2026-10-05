@@ -1,0 +1,13 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - cache-data:/data
+    # PostgreSQL instead of SQLite:
+    #   1. add a postgres service below
+    #   2. set CACHE_DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/payloads
+
+volumes:
+  cache-data:
