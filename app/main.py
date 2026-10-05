@@ -44,17 +44,19 @@ app = FastAPI(title="Payload Caching Service", lifespan=lifespan)
 async def create_payload(
     body: PayloadRequest, session: AsyncSession = Depends(get_session)
 ):
-    payload_id, created = await get_or_build_payload(
+    payload_id, created, stats = await get_or_build_payload(
         body.list_1, body.list_2, session, transformer
     )
-    return {
-        "id": payload_id,
-        "message": (
-            "Payload generated"
-            if created
-            else "Payload already existed; reusing existing identifier"
-        ),
-    }
+    if created:
+        transformed, reused = stats["transformed"], stats["reused"]
+        message = (
+            f"Payload generated: {transformed} "
+            f"{'string' if transformed == 1 else 'strings'} transformed, "
+            f"{reused} reused from cache"
+        )
+    else:
+        message = "Payload already existed; reusing existing identifier"
+    return {"id": payload_id, "message": message}
 
 
 @app.get("/payload/{payload_id}")

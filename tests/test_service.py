@@ -44,21 +44,23 @@ def _read_output(db, payload_id):
 
 def test_first_build_transforms_each_unique_string_once(db):
     transformer = TransformerClient(latency_seconds=0)
-    payload_id, created = _build(db, ["a", "b"], ["c", "a"], transformer)
+    payload_id, created, stats = _build(db, ["a", "b"], ["c", "a"], transformer)
     assert created is True
     assert transformer.calls == 3  # "a" appears twice but is transformed once
+    assert stats == {"transformed": 3, "reused": 0}
     assert _read_output(db, payload_id) == "A, C, B, A"
 
 
 def test_repeat_build_reuses_id_and_makes_no_calls(db):
     transformer = TransformerClient(latency_seconds=0)
-    payload_id, _ = _build(db, ["a"], ["b"], transformer)
+    payload_id, _, _ = _build(db, ["a"], ["b"], transformer)
     assert transformer.calls == 2
 
-    payload_id_2, created_2 = _build(db, ["a"], ["b"], transformer)
+    payload_id_2, created_2, stats_2 = _build(db, ["a"], ["b"], transformer)
     assert created_2 is False
     assert payload_id_2 == payload_id
     assert transformer.calls == 2  # zero new external calls
+    assert stats_2 == {"transformed": 0, "reused": 0}
 
 
 def test_partial_overlap_only_transforms_new_strings(db):
@@ -66,15 +68,16 @@ def test_partial_overlap_only_transforms_new_strings(db):
     _build(db, ["a"], ["b"], transformer)
     assert transformer.calls == 2
 
-    payload_id, created = _build(db, ["a"], ["c"], transformer)
+    payload_id, created, stats = _build(db, ["a"], ["c"], transformer)
     assert created is True
     assert transformer.calls == 3  # only "c" was new
+    assert stats == {"transformed": 1, "reused": 1}
     assert _read_output(db, payload_id) == "A, C"
 
 
 def test_output_matches_spec_sample(db):
     transformer = TransformerClient(latency_seconds=0)
-    payload_id, _ = _build(
+    payload_id, _, _ = _build(
         db,
         ["first string", "second string", "third string"],
         ["other string", "another string", "last string"],

@@ -48,6 +48,23 @@ def test_repeat_post_reuses_identifier(client):
     assert first == second
 
 
+def test_create_message_reports_transform_cache_usage(client):
+    fresh = client.post("/payload", json={"list_1": ["a"], "list_2": ["b"]})
+    assert fresh.json()["message"] == (
+        "Payload generated: 2 strings transformed, 0 reused from cache"
+    )
+
+    partial = client.post("/payload", json={"list_1": ["a"], "list_2": ["c"]})
+    assert partial.json()["message"] == (
+        "Payload generated: 1 string transformed, 1 reused from cache"
+    )
+
+    repeat = client.post("/payload", json={"list_1": ["a"], "list_2": ["c"]})
+    assert repeat.json()["message"] == (
+        "Payload already existed; reusing existing identifier"
+    )
+
+
 def test_mismatched_lengths_are_rejected(client):
     resp = client.post("/payload", json={"list_1": ["a", "b"], "list_2": ["c"]})
     assert resp.status_code == 422
