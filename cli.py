@@ -84,10 +84,11 @@ def main() -> int:
                         file=sys.stderr,
                     )
                     return 1
-                ids.append(resp.json()["id"])
+                data = resp.json()
+                ids.append(data["id"])
                 print(
                     f"iteration {i + 1}/{cli.repeat}: "
-                    f"id={ids[-1]} ({elapsed_ms:.0f} ms)",
+                    f"id={ids[-1]} ({elapsed_ms:.0f} ms) - {data['message']}",
                     file=sys.stderr,
                 )
 
