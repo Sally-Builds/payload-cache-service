@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+# Convenience wrapper so the tool is invoked as `cache-cli`, per the spec.
+# Prefers the project's virtualenv when it exists.
+HERE="$(dirname "$0")"
+if [ -x "$HERE/.venv/bin/python" ]; then
+    exec "$HERE/.venv/bin/python" "$HERE/cli.py" "$@"
+fi
+exec python3 "$HERE/cli.py" "$@"
